@@ -29,59 +29,21 @@ Ronaldo Vindas
 
 
 
-//=================== Lectura de Carpeta de Archivos ===================
-
-void mergeFiles(const char *inputDirectory, const char *outputFile){
-/*
-Función que combina todos los Txt de una carpeta en un solo archivo TXT.
--Entradas: inputDirectory: dirección de la carpeta. outputFile: Nombre de archivo TXT a crear
--Salidas: Archivo TXT con la combinación de los demás archivos
--Restricciones: Solo admite archivos TXT
-*/
-
-    DIR *directory;
-    struct dirent *ent;
-    char inputFile[MAX_FILENAME_LENGTH];
-    char content[MAX_CONTENT_LENGTH];
-    
-    if ((directory = opendir(inputDirectory)) != NULL) {                                                        //Se abre la carpeta de archivos     
-        FILE *output = fopen(outputFile, "w");                                                                  //Se abre el archivo de salida en modo escritura                
-        if (output == NULL) {
-            perror("Error al abrir el archivo de salida TXT");
-            exit(EXIT_FAILURE);
-        }
-        while ((ent = readdir(directory)) != NULL) {                                                           //Itera sobre cada archivo de la carpeta hasta llegar a NULL           
-            if (ent->d_type == DT_REG && strstr(ent->d_name, ".txt") != NULL) {                                //Se revisa que el archivo actual sea un archivo TXT.
-                sprintf(inputFile, "%s/%s", inputDirectory, ent->d_name);                                      //Hace la ruta completa del archivo de entrada           
-                FILE *input = fopen(inputFile, "r");                                                           //Se abre el archivo de entrada en modo lectura       
-
-                if (input == NULL) {
-                    perror("Error al abrir el archivo de entrada");
-                    exit(EXIT_FAILURE);
-                }  
-
-                while (fgets(content, MAX_CONTENT_LENGTH, input) != NULL) { 
-                    fputs(content, output);                                                                     //Lee el contenido del archivo y escribe en el archivo TXT nuevoo
-                }                
-                fclose(input);                                                                                  //Se debe cerrar cada archivo de entrada
-            }
-        }
-        
-        fclose(output);                                                                                        //Se debe cerrar el archivo de salida         
-        closedir(directory);                                                                                    //Se cierra el directorio
-    } else {
-        perror("Error al abrir la carpeta");
-        exit(EXIT_FAILURE);
-    }
-}
-
-
-
 //=================== Lista de Aparición y Cálculo de Frecuencia de Palabras ===================
 
 
 int countCharacters(){
-    //char letters[29];                                                                               //Nota, arreglos dentro de funciones deben indicar el tamaño al declararse, sino saldrá un error "Incomplete Types".
+    char letters[30000] = {
+    'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 
+    'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 
+    'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 
+    'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
+    '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+    'á', 'é', 'í', 'ó', 'ú', 'ü', 'ñ', 'Á', 'É', 'Í', 'Ó', 'Ú', 'Ü', 'Ñ',
+    ',', '.', ';', ':', '!', '?', '¡', '¿', '\'', '"', '(', ')', '-', '_', 
+    '[', ']', '{', '}', '<', '>', '+', '=', '*', '&', '^', '%', '$', '#', 
+    '@', '~', '/', '\\', '|'};                                                                               //Nota, arreglos dentro de funciones deben indicar el tamaño al declararse, sino saldrá un error "Incomplete Types".
+    int lettersCount[8];
     int characterCount = 0;
     int currentCharacter;
     //int index;
@@ -93,21 +55,31 @@ int countCharacters(){
         printf("Could not open file %s", inputFile); 
         return 0; 
     } 
+
+    
+    
+    for (char c = getc(inputFile); c != EOF; c = getc(inputFile)){                                                 //Cuenta la cantidad de caracteres
+        for(int i = 0; i<8; i++){
+            if(c == letters[i]){
+                lettersCount[i] = lettersCount[i] + 1;
+            }
+        }
+        characterCount = characterCount + 1; 
   
-    for (char c = getc(inputFile); c != EOF; c = getc(inputFile))                                                 //Cuenta la cantidad de caracteres
-        characterCount = inputFile + 1; 
-  
-     
+    }
+
+    
     fclose(inputFile);                                                                                            //Se cierra el archivo
   
-    /*
+    
     printf("The file %s has %d characters\n ", 
-           fp, characterCount); */
+           inputFile, characterCount); 
+
+    for(int i = 0; i<8; i++){
+        printf("The file %c has %d characters\n ", letters[i], lettersCount[i]); 
+     
+    }
 }
-
-
-
-
 //=================== Compresión ===================
 
 
