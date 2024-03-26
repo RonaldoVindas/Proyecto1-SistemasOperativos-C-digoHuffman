@@ -19,13 +19,14 @@ Ronaldo Vindas
 
 //#define MAX_TREE_HT 100
 #define MAX_FILENAME_LENGTH 256
-#define MAX_CONTENT_LENGTH 10000 // Tamaño máximo del contenido de cada archivo
+#define MAX_CONTENT_LENGTH 10000            //Tamaño máximo del contenido de cada archivo
 
 
 // ================================================================================================================
 
 
 //=================== Estructura de Árbol Huffman ===================
+
 
 
 //=================== Lectura de Carpeta de Archivos ===================
@@ -79,25 +80,29 @@ Función que combina todos los Txt de una carpeta en un solo archivo TXT.
 //=================== Lista de Aparición y Cálculo de Frecuencia de Palabras ===================
 
 
-int countLetters(){
+int countCharacters(){
     //char letters[29];                                                                               //Nota, arreglos dentro de funciones deben indicar el tamaño al declararse, sino saldrá un error "Incomplete Types".
-    int count = 0;
+    int characterCount = 0;
     int currentCharacter;
     //int index;
     //int isUnique;
     //char inputFile[MAX_FILENAME_LENGTH];
      
-    FILE *input = fopen("MergedTXT.txt", "r"); 
-    int character;
-    do{
-        character = fgetc(input);                                                                        //función "fgetc()" lee el próximo caracter del archivo, lo devuelve como int del caracter, o cómo EOF si es final del archivo o ocurre un error
-        count++;
-
-    
-    }
-    while(fgetc(input) != EOF);
-    fclose(input);
-    printf("Total characters = %d\n", count);
+    FILE *inputFile = fopen("MergedTXT", "r"); 
+    if (inputFile == NULL) { 
+        printf("Could not open file %s", inputFile); 
+        return 0; 
+    } 
+  
+    for (char c = getc(inputFile); c != EOF; c = getc(inputFile))                                                 //Cuenta la cantidad de caracteres
+        characterCount = inputFile + 1; 
+  
+     
+    fclose(inputFile);                                                                                            //Se cierra el archivo
+  
+    /*
+    printf("The file %s has %d characters\n ", 
+           fp, characterCount); */
 }
 
 
@@ -106,11 +111,10 @@ int countLetters(){
 //=================== Compresión ===================
 
 
-
 //=================== MAIN ===================
 int main(){
  mergeFiles("/home/ronaldo/Descargas/Proyecto1-Operativos/Proyecto1-SistemasOperativos-C-digoHuffman/Libros TXT Proyecto", "MergedTXT");
- countLetters();
+ countCharacters();
 
 }
 
