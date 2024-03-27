@@ -17,7 +17,7 @@ Ronaldo Vindas
 #include <dirent.h>                         //Librería POSIX
 #include <string.h>
 
-#define MAX_TREE_HT 256
+//#define MAX_TREE_HT 100
 #define MAX_FILENAME_LENGTH 256
 #define MAX_CONTENT_LENGTH 10000            //Tamaño máximo del contenido de cada archivo
 #define NUM_THREADS 4                       // Número de hilos a utilizar
@@ -32,7 +32,7 @@ Ronaldo Vindas
 struct Node{                                                                    //Nodo del Aŕbol Heap                                                           
     char character;
     unsigned frequency;                                                                     
-    struct Node *left, *right;                                              //Cada nodo enlaza con un hijo izquierdo y uno derecho.
+    struct heapNode *left, *right;                                              //Cada nodo enlaza con un hijo izquierdo y uno derecho.
 };
 
 
@@ -94,9 +94,9 @@ void swapNodes( struct Node** a, struct Node** b){
 
 void minHeapify(struct HuffmanTree* tree, int index) { 
     /*
-    Función que balancea los valores de los nodos hijos de forma que el nodo hijo sea igual o mayor al nodo padre.
-    -Entradas: Árbol a:  árbol a tratar, index: índice del nodo menor
-    -Salidas: N/A
+    Función que intercambia la posición de dos nodos.
+    -Entradas: Nodo a:  Nodo 1 a intercambiar, Nodo b: Nodo 2 a intercambiar.
+    -Salidas: Struct del Árbol Huffman con sus datos asignados.
     -Restricciones: N/A
     */
     
@@ -104,17 +104,17 @@ void minHeapify(struct HuffmanTree* tree, int index) {
     int left = 2 * index + 1; 
     int right = 2 * index + 2; 
   
-    if (left < tree->size                                                   //Si la frecuencia del Hijo Izquierdo es menor, el menor será este nodo izquierdo
+    if (left < tree->size 
         && tree->array[left]->frequency 
                < tree->array[smallest]->frequency) 
         smallest = left; 
   
-    if (right < tree->size                                                  //Si la frecuencia del Hijo Derecho es menor, el menor será este nodo derecho
+    if (right < tree->size 
         && tree->array[right]->frequency 
                < tree->array[smallest]->frequency) 
         smallest = right; 
   
-    if (smallest != index) {                                                //Si el nodo actual no es el menor se intercambia la posición entre el nodo menor y el actual 
+    if (smallest != index) { 
         swapNodes(&tree->array[smallest], &tree->array[index]); 
         minHeapify(tree, smallest); 
     } 
@@ -148,148 +148,21 @@ struct Node* extractMin(struct HuffmanTree* tree){
     return temp; 
 } 
 
-void insertTree(struct HuffmanTree* tree, struct Node* node){ 
-    /*
-    Función que inserta un nodo en el Árbol Huffman 
-    -Entradas: tree: Árbol Huffman
-    -Salidas: Árbol con nuevo nodo insertado
-    -Restricciones: N/A
-    */
-  
-    ++tree->size; 
-    int i = tree->size - 1; 
-  
-    while (i & node->frequency < tree->array[(i - 1) / 2]->frequency) { 
-        tree->array[i] = tree->array[(i - 1) / 2]; 
-        i = (i - 1) / 2; 
-    } 
-    tree->array[i] = node; 
-} 
+//insertTreee (insertMinHeap)
 
-void buildTree(struct HuffmanTree* tree){ 
-    /*
-    Función que construye el árbol Huffman y lo balancea
-    -Entradas: tree: Árbol Huffman
-    -Salidas: N/A
-    -Restricciones: N/A
-    */
-  
-    int n = tree->size - 1; 
-    int i;  
-    for (i = (n - 1) / 2; i >= 0; --i)
-        minHeapify(tree, i); 
-} 
+//buildTree (buildMinHeap)
 
-void printTree(int arr[], int n){
-    /*
-    Función que imprime el árbol Huffman
-    -Entradas: arr: Árbol Huffman (arreglo), n: tamaño del árbol arreglo
-    -Salidas: N/A
-    -Restricciones: N/A
-    */ 
-    int i; 
-    for (i = 0; i < n; ++i) 
-        printf("%d", arr[i]); 
-    printf("\n"); 
-} 
+//printArray(printArr)
 
-int isLeaf(struct Node* node){ 
-    /*
-    Función que imprime el árbol Huffman
-    -Entradas: node: Nodo a comprobar
-    -Salidas: Booleano True: Si el nodo no tiene hijos, Booleano False: Si el nodo tiene hijos
-    -Restricciones: N/A
-    */ 
-  
-    return !(node->left) && !(node->right); 
-} 
+//isLeaf(isLeaf)
 
-struct HuffmanTree* createAndBuildTree(char data[], int frequency[], int size) { 
-    /*
-    Función que combina las funciones de crear y construcción del árbol.
-    -Entradas: data: arreglo de caracteres, frequency: arreglo de frecuencia de aparición de caractéres, size: Tamaño de los arreglos
-    -Salidas: Booleano True: Si el nodo no tiene hijos, Booleano False: Si el nodo tiene hijos
-    -Restricciones: N/A
-    */ 
-   
-    struct HuffmanTree* tree = createTree(size); 
-  
-    for (int i = 0; i < size; ++i) 
-        tree->array[i] = newNode(data[i], frequency[i]); 
-  
-    tree->size = size; 
-    buildTree(tree); 
-  
-    return tree; 
-} 
+//createNBuildTree(createAndBuildMinHeap)
 
+//buildHuffmanTree(buildHuffmanTree)
 
-struct Node* buildHuffmanTree(char data[], int freq[], int size) { 
-    /*
-    Función que crea el árbol Huffman.
-    -Entradas: data: arreglo de caracteres, frequency: arreglo de frecuencia de aparición de caractéres, size: Tamaño de los arreglos
-    -Salidas: Árbol Huffman creado
-    -Restricciones: N/A
-    */ 
+//codesHuffman(HuffmanCodes)
 
-    struct Node *left, *right, *top; 
-  
-    
-    struct HuffmanTree* tree = createAndBuildTree(data, freq, size);                             //Se Crea un árbol de un mimsmo tamaño y capacidad. 
-    
-    while (!treeSizeOne(tree)) {                                                                      //Se itera siempre y cuando el tamaño del árbol no sea 1
-  
-        left = extractMin(tree);                                                                    //Se extraen los dos caracterés con menor frecuencia del árbol                    
-        right = extractMin(tree); 
-         
-        top = newNode('$', left->frequency + right->frequency);                                     //Se crea un nuevo nodo con una frecuencia equivalente a la suma de las frecuencias de los dos nodos anteriores. Se le asigna el caracter especial "$"
-  
-        top->left = left;                                                                           //Se les asigna como hijos a los nodos creados anteriormente
-        top->right = right; 
-  
-        insertTree(tree, top);                                                           
-    } 
-    return extractMin(tree);                                                                        //El último nodo será la raíz y se completa el árbol
-} 
-
-void printCodes(struct Node* root, int codeArray[], int top) { 
-    /*
-    Función que crea el código binario para cada caractér.
-    -Entradas: root: nodo raíz, arr: arreglo que almacenará el código Huffman binario, size: Tamaño de los arreglos
-    -Salidas: Árbol Huffman creado
-    -Restricciones: N/A
-    */ 
-  
-    if (root->left) {                                                                                //Asigna "0" a los nodos izquierdos
-        codeArray[top] = 0; 
-        printCodes(root->left, codeArray, top + 1); 
-    } 
-  
-    if (root->right) {                                                                               //Asigna "1" a los nodos izquierdos           
-        codeArray[top] = 1; 
-        printCodes(root->right, codeArray, top + 1); 
-    } 
-  
-    if (isLeaf(root)) {                                                                             //Si el nodo es Hoja, entonces tiene un caractér, se imprime el caractér y su código binario
-        printf("%c: ", root->character); 
-        printTree(codeArray, top); 
-    } 
-
-} 
-
-void HuffmanCodes(char *data, int *freq, int size){ 
-    /*
-    Función que crea el árbol Huffman y crea el código binario comprimido.
-    -Entradas: data: arreglo de caracteres, frequency: arreglo de frecuencia de aparición de caractéres, size: Tamaño de los arreglos
-    -Salidas: Código Huffman creado
-    -Restricciones: N/A
-    */ 
-
-    struct Node* root = buildHuffmanTree(data, freq, size);                             //Se construye el árbol
-    int arr[MAX_TREE_HT], top = 0; 
-
-    printCodes(root, arr, top);                                                         //Se imprime el código binario
-} 
+//printCodes(printCodes)
 
 
 
@@ -343,7 +216,7 @@ void mergeFiles(const char *inputDirectory, const char *outputFile){
 //3)=================== Lista de Aparición y Cálculo de Frecuencia de Palabras ===================
 
 
-void countCharacters(char *letters, double *freqArr, int *lettersCount/*FILE *inputFile*/){
+void countCharacters(char *letters, double *freqArr/*FILE *inputFile*/){
     /*
     Función que cuenta la cantidad de apariciones de caractéres y en base a ello calcula la frecuencia de aparición de cada uno.
     -Entradas: N/A
@@ -352,7 +225,9 @@ void countCharacters(char *letters, double *freqArr, int *lettersCount/*FILE *in
     */
 
     
-                                                                        
+                                                                                    
+    int lettersCount[111] = {0};
+    
     int characterCount = 0;
     int currentCharacter;
 
@@ -363,7 +238,7 @@ void countCharacters(char *letters, double *freqArr, int *lettersCount/*FILE *in
     } 
     
     while ((currentCharacter = fgetc(inputFile)) != EOF) {                                                          //Cuenta la cantidad de caracteres                                       
-        for (int i = 0; i < 93; i++) {                                                                             //Se Itera sobre todo el arreglo de caractéres permitidos                 
+        for (int i = 0; i < 110; i++) {                                                                             //Se Itera sobre todo el arreglo de caractéres permitidos                 
             if (currentCharacter == letters[i]) {                                                                   //Si la letra está en el arreglo, se aumenta el contador                  
                 lettersCount[i]++;
             }
@@ -377,7 +252,7 @@ void countCharacters(char *letters, double *freqArr, int *lettersCount/*FILE *in
            inputFile, characterCount); 
 
     
-    for (int i = 0; i < 93; i++) {
+    for (int i = 0; i < 110; i++) {
         freqArr[i] = (double)lettersCount[i] / characterCount * 100;                                               //Calcula la frecuencia de aparición en porcentaje
         printf("Caracter '%c' aparece %d veces, frecuencia: %.2f%%, precision: %f \n", letters[i], lettersCount[i], freqArr[i], freqArr[i]); 
     }
@@ -387,38 +262,56 @@ void countCharacters(char *letters, double *freqArr, int *lettersCount/*FILE *in
 }
 //4)=================== Compresión ===================
 
+void compressFile(const char *inputFile, const char *outputFile, double *freqArr, char *letters) {
+    FILE *input = fopen(inputFile, "r");
+    FILE *output = fopen(outputFile, "wb"); // Abre en modo binario para evitar problemas con caracteres especiales
 
+    if (input == NULL || output == NULL) {
+        perror("Error al abrir archivos de entrada/salida");
+        exit(EXIT_FAILURE);
+    }
+
+    // Escribir la tabla de frecuencias al principio del archivo comprimido
+    fwrite(freqArr, sizeof(double), 111, output);
+    fwrite(letters, sizeof(char), 111, output);
+
+    // Crea una tabla de códigos Huffman para buscar códigos rápidamente
+    // Aquí deberías implementar la función que genera los códigos Huffman
+
+    // Luego, escanea el archivo de entrada y escribe los códigos Huffman correspondientes en el archivo de salida
+    char currentChar;
+    while ((currentChar = fgetc(input)) != EOF) {
+        // Aquí debes escribir el código Huffman correspondiente al caracter actual en el archivo de salida
+    }
+
+    fclose(input);
+    fclose(output);
+}
 //=================== MAIN ===================
 int main(){
-    mergeFiles("/home/ronaldo/Descargas/Proyecto1-Operativos/Proyecto1-SistemasOperativos-C-digoHuffman/Libros TXT Proyecto", "MergedTXT");                 //Nota: Recuerde cambiar la ruta por una relativa
+    mergeFiles("/home/rebecamadrigal/Escritorio/Proyecto1-SistemasOperativos-C-digoHuffman/Libros TXT Proyecto", "MergedTXT");                 //Nota: Recuerde cambiar la ruta por una relativa
 
     //FILE *inputFile = fopen("MergedTXT", "r");
 
 
-    char letters[93/*256*/] = {                                                                                         //Nota, arreglos dentro de funciones deben indicar el tamaño al declararse, sino saldrá un error "Incomplete Types".
+    char letters[95 /*256*/] = {                                                                                         //Nota, arreglos dentro de funciones deben indicar el tamaño al declararse, sino saldrá un error "Incomplete Types".
         'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 
         'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 
         'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 
         'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
         '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
         /*'á',   'é',     'í',    'ó',   'ú',    'ü',    'ñ',    'Á',     'É',   'Í',    'Ó',    'Ú',    'Ü',     'Ñ', */       //Hay problemas reconociendo caractéres especiales
-        //'\0x3B', '\xE9', '\xED', '\xF3', '\xFA', '\xFC', '\xF1', '\xC1', '\xC9', '\xCD', '\xD3', '\xDA', '\xDC', '\xD1',         //Valores hexadecimales de caractéres especiales 
-        ',', '.', /*';',*/ ':', '!', '?', /*'¡',*/ /*'¿',*/ '\'', '"', '(', ')', '-', '_', 
+        /*(char)225, 233, 237, 243, 250, 252, 241, 193, 201, 205, 211, 218, 220, 209,   */      //Valores hexadecimales de caractéres especiales 
+        ',', '.', /*';',*/ ':', '!', '?', /*'¡'*/ /*'¿',*/ '\'', '"', '(', ')', '-', '_', 
         '[', ']', '{', '}', '<', '>', '+', '=', '*', '&', '^', '%', '$', '#', 
         '@', '~', '/', '\\', '|'
     }; 
 
-    int lettersCount[111] = {0};
     double freqArr[111] = {0};
 
-         
-    countCharacters(letters, freqArr, lettersCount);
-
+     
+    countCharacters(letters, freqArr);
     //fclose(inputFile); 
-
-    int size = sizeof(letters) / sizeof(letters[0]); 
-    HuffmanCodes(letters, lettersCount, size); 
-    
     return 0;
 }
 
