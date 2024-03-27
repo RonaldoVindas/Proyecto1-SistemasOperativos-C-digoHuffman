@@ -418,7 +418,7 @@ int main(){
 
     int size = sizeof(letters) / sizeof(letters[0]); 
     HuffmanCodes(letters, lettersCount, size); 
-
+    
     return 0;
 }
 
