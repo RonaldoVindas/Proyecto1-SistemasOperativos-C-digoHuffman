@@ -10,8 +10,6 @@ Ronaldo Vindas
 
 */
 
-// ========================= Encabezado =========================================================
-
 #define _DEFAULT_SOURCE                     // DT_REG is not part of ISO C11 extensions, so use this, You can use feature macros to enable additional extensions. As readdir manual mentions, you need _DEFAULT_SOURCE macro to enable file type constants. You can do this in the source code before including dirent.h
 
 #include <stdio.h> 
@@ -345,11 +343,7 @@ void mergeFiles(const char *inputDirectory, const char *outputFile){
 //3)=================== Lista de Aparición y Cálculo de Frecuencia de Palabras ===================
 
 
-<<<<<<< Updated upstream
 void countCharacters(char *letters, double *freqArr, int *lettersCount/*FILE *inputFile*/){
-=======
-int countCharacters(){
->>>>>>> Stashed changes
     /*
     Función que cuenta la cantidad de apariciones de caractéres y en base a ello calcula la frecuencia de aparición de cada uno.
     -Entradas: N/A
@@ -357,7 +351,6 @@ int countCharacters(){
     -Restricciones: N/A
     */
 
-<<<<<<< Updated upstream
     
                                                                         
     int characterCount = 0;
@@ -393,46 +386,6 @@ int countCharacters(){
     
 }
 //4)=================== Compresión ===================
-=======
-    char letters[8] = {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'};                                                   //Nota, arreglos dentro de funciones deben indicar el tamaño al declararse, sino saldrá un error "Incomplete Types".
-    int lettersCount[8];
-    int characterCount = 0;
-    int currentCharacter;
-
-    //int index;
-    //int isUnique;
-    //char inputFile[MAX_FILENAME_LENGTH];
-     
-    FILE *inputFile = fopen("MergedTXT", "r"); 
-    if (inputFile == NULL) {                                                                                      //Revisa si el archivo existe
-        printf("Could not open file %s", inputFile); 
-        return 0; 
-    } 
-    
-    for (char c = getc(inputFile); c != EOF; c = getc(inputFile)){                                                 //Itera y cuenta la cantidad de caracteres en el archivo de entrada
-        for(int i = 0; i<8; i++){                                                                                  //Se Itera sobre todo el arreglo de caractéres permitidos 
-            if(c == letters[i]){                                                                                   //Si la letra está en el arreglo, se aumenta el contador
-                lettersCount[i] = lettersCount[i] + 1;                                                                  
-            }
-        }
-        characterCount = characterCount + 1; 
-  
-    }
-
-    fclose(inputFile);                                                                                            //Se cierra el archivo
-  
-    printf("El archivo tiene en total %d caracteres\n ", 
-           inputFile, characterCount); 
-
-    for(int i = 0; i<8; i++){
-        printf("El Caracter: %c aparece %d veces \n ", letters[i], lettersCount[i]); 
-     
-    }
-}
-
-
-//=================== Compresión ===================
->>>>>>> Stashed changes
 
 
 //=================== MAIN ===================
