@@ -21,7 +21,7 @@ Ronaldo Vindas
 #define MAX_FILENAME_LENGTH 256
 #define MAX_CONTENT_LENGTH 10000            //Tamaño máximo del contenido de cada archivo
 #define NUM_THREADS 4                       // Número de hilos a utilizar
-
+#define BLOCK_SIZE 1024 
 
 // ================================================================================================================
 
@@ -387,14 +387,109 @@ void countCharacters(char *letters, double *freqArr, int *lettersCount/*FILE *in
 }
 //4)=================== Compresión ===================
 
+int splitFile(const char *inputFile) {
+    FILE *input = fopen(inputFile, "r");
+    if (input == NULL) {
+        perror("Error al abrir el archivo de entrada");
+        exit(EXIT_FAILURE);
+    }
+    char outputFile[256]; 
+    int blockNumber = 0; 
+    while (!feof(input)) { 
+        char block[BLOCK_SIZE]; 
+        size_t bytesRead = fread(block, sizeof(char), BLOCK_SIZE, input); 
+        if (bytesRead > 0) { 
+            sprintf(outputFile, "block%d.txt", blockNumber); 
+            FILE *output = fopen(outputFile, "w"); 
+            if (output == NULL) {
+                perror("Error al abrir el archivo de salida");
+                exit(EXIT_FAILURE);
+            }
+            fwrite(block, sizeof(char), bytesRead, output); 
+            fclose(output); 
+            blockNumber++; 
+        }
+    }
+    fclose(input); 
+    return blockNumber;
+}
+
+void processBlock(const char *blockData, size_t blockSize, char *letters, int *lettersCount) {
+    for (size_t i = 0; i < blockSize; i++) {
+        char currentCharacter = blockData[i];
+        for (int j = 0; j < 93; j++) {
+            if (currentCharacter == letters[j]) {
+                lettersCount[j]++;
+                break;  
+            }
+        }
+    }
+}
+
+struct Node* buildHuffmanTree2(char data[], int freq[], int size) { 
+    struct Node *left, *right, *top; 
+    struct HuffmanTree* tree = createAndBuildTree(data, freq, size); 
+    while (!treeSizeOne(tree)) { 
+        left = extractMin(tree); 
+        right = extractMin(tree); 
+        top = newNode('$', left->frequency + right->frequency); 
+        top->left = left; 
+        top->right = right; 
+        insertTree(tree, top); 
+    } 
+    return extractMin(tree); 
+}
+
+void generateHuffmanCodes(struct Node* root, char *code[], char *currentCode, int index) {
+    if (root->left) {
+        currentCode[index] = '0';
+        generateHuffmanCodes(root->left, code, currentCode, index + 1);
+    }
+    if (root->right) {
+        currentCode[index] = '1';
+        generateHuffmanCodes(root->right, code, currentCode, index + 1);
+    }
+    if (isLeaf(root)) {
+        currentCode[index] = '\0';
+        code[root->character] = strdup(currentCode);
+    }
+}
+
+void writeCompressedData(FILE *input, FILE *output, char *code[]) {
+    int currentCharacter;
+    while ((currentCharacter = fgetc(input)) != EOF) {
+        fputs(code[currentCharacter], output);
+    }
+}
+
+void deleteBlockFiles(const char *directory) {
+    DIR *dir;
+    struct dirent *entry;
+    char filepath[256];
+    dir = opendir(directory);
+    if (dir == NULL) {
+        perror("Error al abrir el directorio");
+        exit(EXIT_FAILURE);
+    }
+    while ((entry = readdir(dir)) != NULL) {
+        if (strncmp(entry->d_name, "block", 5) == 0) {
+            sprintf(filepath, "%s/%s", directory, entry->d_name);
+            if (remove(filepath) != 0) {
+                perror("Error al eliminar el archivo");
+                exit(EXIT_FAILURE);
+            } 
+        }
+    }
+    closedir(dir);
+}
+
+
 
 //=================== MAIN ===================
 int main(){
-    mergeFiles("/home/ronaldo/Descargas/Proyecto1-Operativos/Proyecto1-SistemasOperativos-C-digoHuffman/Libros TXT Proyecto", "MergedTXT");                 //Nota: Recuerde cambiar la ruta por una relativa
-
+    mergeFiles("/home/rebecamadrigal/Escritorio/Proyecto1-SistemasOperativos-C-digoHuffman/Libros TXT Proyecto", "MergedTXT");                 //Nota: Recuerde cambiar la ruta por una relativa
+    splitFile("MergedTXT");
     //FILE *inputFile = fopen("MergedTXT", "r");
-
-
     char letters[93/*256*/] = {                                                                                         //Nota, arreglos dentro de funciones deben indicar el tamaño al declararse, sino saldrá un error "Incomplete Types".
         'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 
         'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 
@@ -408,19 +503,50 @@ int main(){
         '@', '~', '/', '\\', '|'
     }; 
 
+
+    // Cuenta los caracteres y calcula frecuencias para cada bloque
+    int blockNumber = splitFile("MergedTXT"); 
+    printf("Número total de bloques: %d\n", blockNumber);
     int lettersCount[111] = {0};
     double freqArr[111] = {0};
-
-         
-    countCharacters(letters, freqArr, lettersCount);
-
-    //fclose(inputFile); 
-
-    int size = sizeof(letters) / sizeof(letters[0]); 
-    HuffmanCodes(letters, lettersCount, size); 
+    for (int i = 0; i < blockNumber; i++) {
+        char inputFile[256];
+        sprintf(inputFile, "block%d.txt", i);
+        FILE *input = fopen(inputFile, "r");
+        if (input == NULL) {
+            perror("Error al abrir el archivo de entrada");
+            exit(EXIT_FAILURE);
+        }
+        char blockData[BLOCK_SIZE];
+        size_t bytesRead;
+        while ((bytesRead = fread(blockData, sizeof(char), BLOCK_SIZE, input)) > 0) {
+            processBlock(blockData, bytesRead, letters, lettersCount);
+        }
+        fclose(input);
+    }
     
+
+    // Construción del árbol Huffman y tambien genera los códigos Huffman
+    int size = sizeof(letters) / sizeof(letters[0]);
+    struct Node* root = buildHuffmanTree2(letters, lettersCount, size);
+    char *code[111];
+    char currentCode[MAX_TREE_HT];
+    generateHuffmanCodes(root, code, currentCode, 0);
+
+    // Comprime todos los datos y los escribe en un archivo
+    FILE *inputFile = fopen("MergedTXT", "r");
+    FILE *outputFile = fopen("CompressedFile.txt", "w");
+    if (inputFile == NULL || outputFile == NULL) {
+        perror("Error al abrir el archivo de entrada o salida");
+        exit(EXIT_FAILURE);
+    }
+    writeCompressedData(inputFile, outputFile, code);
+    fclose(inputFile);
+    fclose(outputFile);
+
+    // Limpia todos los archivos block
+    deleteBlockFiles(".");
+
     return 0;
 }
-
-
-
+    //fclose(inputFile);   
