@@ -27,7 +27,7 @@ Ronaldo Vindas
 
 //1) =================== Creación del Struct de Árbol Huffman ===================
 
-
+struct HuffmanTree* tree;
 
 struct Node{                                                                    //Nodo del Aŕbol Heap                                                           
     char character;
@@ -54,11 +54,14 @@ struct Node* newNode(char character, unsigned frequency){
     -Restricciones: N/A
     */
 
-    struct Node* temp = (struct Node*)malloc( sizeof(struct HuffmanTree) ); 
-  
-    temp-> left = temp ->right = NULL;                                         //Los hijos( izq, der) son nulos pues al momento de crearse el nodo, aún no tiene nodos hijos.
-    temp-> character = character; 
-    temp-> frequency = frequency; 
+    struct Node* temp = (struct Node*)malloc(sizeof(struct Node)); 
+    if (temp == NULL) {
+        perror("Error al asignar memoria para un nuevo nodo");
+        exit(EXIT_FAILURE);
+    }
+    temp->left = temp->right = NULL;                                         
+    temp->character = character; 
+    temp->frequency = frequency;
   
     return temp; 
 } 
@@ -70,14 +73,22 @@ struct HuffmanTree* createTree(unsigned capacity) {
     -Salidas: Struct del Árbol Huffman con sus datos asignados.
     -Restricciones: N/A
     */
-  
     struct HuffmanTree* tree = (struct HuffmanTree*)malloc(sizeof(struct HuffmanTree)); 
-
-    tree->size = 0;                                                            //Tamaño al crearse es de 0
+    if (tree == NULL) {
+        perror("Error al asignar memoria para el árbol Huffman");
+        exit(EXIT_FAILURE);
+    }
+    tree->size = 0;                                                            
     tree->capacity = capacity; 
     tree->array = (struct Node**)malloc( tree->capacity * sizeof(struct Node*)); 
+    if (tree->array == NULL) {
+        free(tree);
+        perror("Error al asignar memoria para el array de nodos del árbol Huffman");
+        exit(EXIT_FAILURE);
+    }
     return tree; 
 }
+
 
 void swapNodes( struct Node** a, struct Node** b){
     /*
@@ -103,18 +114,13 @@ void minHeapify(struct HuffmanTree* tree, int index) {
     int smallest = index; 
     int left = 2 * index + 1; 
     int right = 2 * index + 2; 
-  
-    if (left < tree->size                                                   //Si la frecuencia del Hijo Izquierdo es menor, el menor será este nodo izquierdo
-        && tree->array[left]->frequency 
-               < tree->array[smallest]->frequency) 
+    if (left < tree->size && tree->array[left]->frequency < tree->array[smallest]->frequency) 
         smallest = left; 
   
-    if (right < tree->size                                                  //Si la frecuencia del Hijo Derecho es menor, el menor será este nodo derecho
-        && tree->array[right]->frequency 
-               < tree->array[smallest]->frequency) 
+    if (right < tree->size && tree->array[right]->frequency < tree->array[smallest]->frequency) 
         smallest = right; 
-  
-    if (smallest != index) {                                                //Si el nodo actual no es el menor se intercambia la posición entre el nodo menor y el actual 
+
+    if (smallest != index) { 
         swapNodes(&tree->array[smallest], &tree->array[index]); 
         minHeapify(tree, smallest); 
     } 
@@ -159,11 +165,11 @@ void insertTree(struct HuffmanTree* tree, struct Node* node){
     ++tree->size; 
     int i = tree->size - 1; 
   
-    while (i & node->frequency < tree->array[(i - 1) / 2]->frequency) { 
+    while (i > 0 && node->frequency < tree->array[(i - 1) / 2]->frequency) { 
         tree->array[i] = tree->array[(i - 1) / 2]; 
         i = (i - 1) / 2; 
     } 
-    tree->array[i] = node; 
+    tree->array[i] = node;
 } 
 
 void buildTree(struct HuffmanTree* tree){ 
@@ -284,12 +290,11 @@ void HuffmanCodes(char *data, int *freq, int size){
     -Salidas: Código Huffman creado
     -Restricciones: N/A
     */ 
-
     struct Node* root = buildHuffmanTree(data, freq, size);                             //Se construye el árbol
     int arr[MAX_TREE_HT], top = 0; 
-
     printCodes(root, arr, top);                                                         //Se imprime el código binario
 } 
+
 
 
 
@@ -307,34 +312,33 @@ void mergeFiles(const char *inputDirectory, const char *outputFile){
     struct dirent *ent;
     char inputFile[MAX_FILENAME_LENGTH];
     char content[MAX_CONTENT_LENGTH];
-    
-    if ((directory = opendir(inputDirectory)) != NULL) {                                                       //Se abre la carpeta de archivos     
-        FILE *output = fopen(outputFile, "w");                                                                 //Se abre el archivo de salida en modo escritura                
+    char separator[] = "€\n";
+    if ((directory = opendir(inputDirectory)) != NULL) {                                                    
+        FILE *output = fopen(outputFile, "w");                                                             
         if (output == NULL) {
             perror("Error al abrir el archivo de salida TXT");
             exit(EXIT_FAILURE);
         }
-        while ((ent = readdir(directory)) != NULL) {                                                           //Itera sobre cada archivo de la carpeta hasta llegar a NULL           
-            if (ent->d_type == DT_REG && strstr(ent->d_name, ".txt") != NULL) {                                //Se revisa que el archivo actual sea un archivo TXT.
-                sprintf(inputFile, "%s/%s", inputDirectory, ent->d_name);                                      //Hace la ruta completa del archivo de entrada           
-                FILE *input = fopen(inputFile, "r");                                                           //Se abre el archivo de entrada en modo lectura       
-
+        while ((ent = readdir(directory)) != NULL) {                                                        
+            if (ent->d_type == DT_REG && strstr(ent->d_name, ".txt") != NULL) {                             
+                sprintf(inputFile, "%s/%s", inputDirectory, ent->d_name);                                   
+                FILE *input = fopen(inputFile, "r");                                                         
                 if (input == NULL) {
-                    perror("Error al abrir el archivo de entrada");
+                    perror("Error al abrir el archivo de entrada TXT");
+                    fclose(output);
                     exit(EXIT_FAILURE);
-                }  
-
-                while (fgets(content, MAX_CONTENT_LENGTH, input) != NULL) { 
-                    fputs(content, output);                                                                     //Lee el contenido del archivo y escribe en el archivo TXT nuevoo
-                }                
-                fclose(input);                                                                                  //Se debe cerrar cada archivo de entrada
+                }
+                while (fgets(content, sizeof(content), input) != NULL) {                                     
+                    fputs(content, output);                                                                  
+                }
+                fputs(separator, output); // Agregar símbolo de separación al final del archivo
+                fclose(input);                                                                               
             }
         }
-        
-        fclose(output);                                                                                         //Se debe cerrar el archivo de salida         
-        closedir(directory);                                                                                    //Se cierra el directorio
-    } else {
-        perror("Error al abrir la carpeta");
+        fclose(output);                                                                                       
+        closedir(directory);                                                                                  
+    } else {                                                                                                  
+        perror("Error al abrir el directorio");
         exit(EXIT_FAILURE);
     }
 }
@@ -343,7 +347,7 @@ void mergeFiles(const char *inputDirectory, const char *outputFile){
 //3)=================== Lista de Aparición y Cálculo de Frecuencia de Palabras ===================
 
 
-void countCharacters(char *letters, double *freqArr, int *lettersCount/*FILE *inputFile*/){
+void countCharacters(char *letters, double *freqArr, int *lettersCount) {
     /*
     Función que cuenta la cantidad de apariciones de caractéres y en base a ello calcula la frecuencia de aparición de cada uno.
     -Entradas: N/A
@@ -351,94 +355,38 @@ void countCharacters(char *letters, double *freqArr, int *lettersCount/*FILE *in
     -Restricciones: N/A
     */
 
-    
-                                                                        
     int characterCount = 0;
     int currentCharacter;
 
-    
-    FILE *inputFile = fopen("MergedTXT", "r"); 
-    if (inputFile == NULL) { 
-        printf("No se pudo abrir el archivo %s .", inputFile); 
-    } 
-    
-    while ((currentCharacter = fgetc(inputFile)) != EOF) {                                                          //Cuenta la cantidad de caracteres                                       
-        for (int i = 0; i < 93; i++) {                                                                             //Se Itera sobre todo el arreglo de caractéres permitidos                 
-            if (currentCharacter == letters[i]) {                                                                   //Si la letra está en el arreglo, se aumenta el contador                  
+    FILE *inputFile = fopen("MergedTXT", "r");
+    if (inputFile == NULL) {
+        perror("Error al abrir el archivo MergedTXT");
+        exit(EXIT_FAILURE);
+    }
+
+    while ((currentCharacter = fgetc(inputFile)) != EOF) {
+        for (int i = 0; i < 93; i++) {
+            if (currentCharacter == letters[i]) {
                 lettersCount[i]++;
             }
         }
-        characterCount++;                                                                                           //Aumenta la cantidad de caractéres en 
+        characterCount++;
     }
 
-    fclose(inputFile);                                                                                              //Se cierra el archivo
+    fclose(inputFile);
 
-    printf("The file %s has %d characters\n ", 
-           inputFile, characterCount); 
+    printf("El archivo MergedTXT tiene %d caracteres\n ", characterCount);
 
-    
     for (int i = 0; i < 93; i++) {
-        freqArr[i] = (double)lettersCount[i] / characterCount * 100;                                               //Calcula la frecuencia de aparición en porcentaje
-        printf("Caracter '%c' aparece %d veces, frecuencia: %.2f%%, precision: %f \n", letters[i], lettersCount[i], freqArr[i], freqArr[i]); 
+        freqArr[i] = (double)lettersCount[i] / characterCount * 100;
+        printf("Caracter '%c' aparece %d veces, frecuencia: %.2f%%, precision: %f \n", letters[i], lettersCount[i], freqArr[i], freqArr[i]);
     }
-                                                                                            
+}                                                                                           
     
     
-}
+
 //4)=================== Compresión ===================
 
-int splitFile(const char *inputFile) {
-    FILE *input = fopen(inputFile, "r");
-    if (input == NULL) {
-        perror("Error al abrir el archivo de entrada");
-        exit(EXIT_FAILURE);
-    }
-    char outputFile[256]; 
-    int blockNumber = 0; 
-    while (!feof(input)) { 
-        char block[BLOCK_SIZE]; 
-        size_t bytesRead = fread(block, sizeof(char), BLOCK_SIZE, input); 
-        if (bytesRead > 0) { 
-            sprintf(outputFile, "block%d.txt", blockNumber); 
-            FILE *output = fopen(outputFile, "w"); 
-            if (output == NULL) {
-                perror("Error al abrir el archivo de salida");
-                exit(EXIT_FAILURE);
-            }
-            fwrite(block, sizeof(char), bytesRead, output); 
-            fclose(output); 
-            blockNumber++; 
-        }
-    }
-    fclose(input); 
-    return blockNumber;
-}
-
-void processBlock(const char *blockData, size_t blockSize, char *letters, int *lettersCount) {
-    for (size_t i = 0; i < blockSize; i++) {
-        char currentCharacter = blockData[i];
-        for (int j = 0; j < 93; j++) {
-            if (currentCharacter == letters[j]) {
-                lettersCount[j]++;
-                break;  
-            }
-        }
-    }
-}
-
-struct Node* buildHuffmanTree2(char data[], int freq[], int size) { 
-    struct Node *left, *right, *top; 
-    struct HuffmanTree* tree = createAndBuildTree(data, freq, size); 
-    while (!treeSizeOne(tree)) { 
-        left = extractMin(tree); 
-        right = extractMin(tree); 
-        top = newNode('$', left->frequency + right->frequency); 
-        top->left = left; 
-        top->right = right; 
-        insertTree(tree, top); 
-    } 
-    return extractMin(tree); 
-}
 
 void generateHuffmanCodes(struct Node* root, char *code[], char *currentCode, int index) {
     if (root->left) {
@@ -451,36 +399,49 @@ void generateHuffmanCodes(struct Node* root, char *code[], char *currentCode, in
     }
     if (isLeaf(root)) {
         currentCode[index] = '\0';
-        code[root->character] = strdup(currentCode);
+        code[root->character] = strdup(currentCode); // Utilizamos strdup para copiar el código en una nueva cadena
     }
 }
 
-void writeCompressedData(FILE *input, FILE *output, char *code[]) {
-    int currentCharacter;
-    while ((currentCharacter = fgetc(input)) != EOF) {
-        fputs(code[currentCharacter], output);
-    }
-}
-
-void deleteBlockFiles(const char *directory) {
-    DIR *dir;
-    struct dirent *entry;
-    char filepath[256];
-    dir = opendir(directory);
-    if (dir == NULL) {
-        perror("Error al abrir el directorio");
+void writeCompressedData(const char *inputFileName, char **code) {
+    FILE *input = fopen(inputFileName, "r");
+    if (input == NULL) {
+        perror("Error al abrir el archivo de entrada");
         exit(EXIT_FAILURE);
     }
-    while ((entry = readdir(dir)) != NULL) {
-        if (strncmp(entry->d_name, "block", 5) == 0) {
-            sprintf(filepath, "%s/%s", directory, entry->d_name);
-            if (remove(filepath) != 0) {
-                perror("Error al eliminar el archivo");
-                exit(EXIT_FAILURE);
-            } 
+
+    char outputFileName[strlen(inputFileName) + 6]; 
+    sprintf(outputFileName, "%s.txt", inputFileName); 
+    FILE *output = fopen(outputFileName, "w");
+    if (output == NULL) {
+        perror("Error al abrir el archivo de salida");
+        fclose(input);
+        exit(EXIT_FAILURE);
+    }
+    int currentCharacter;
+    while ((currentCharacter = fgetc(input)) != EOF) {
+        if (currentCharacter >= 0 && currentCharacter < 111 && code[currentCharacter] != NULL) {
+            fputs(code[currentCharacter], output);
+        } else {
+            fprintf(stderr, "Error: Caracter comprimido no encontrado para el código ASCII %d\n", currentCharacter);
         }
     }
-    closedir(dir);
+    for (int i = 0; i < 111; ++i) {
+        if (code[i] != NULL) {
+            free(code[i]);
+        }
+    }
+    fclose(input);
+    fclose(output);
+}
+
+
+void freeTree(struct HuffmanTree* tree) {
+    for (int i = 0; i < tree->size; ++i) {
+        free(tree->array[i]);
+    }
+    free(tree->array);
+    free(tree);
 }
 
 
@@ -488,9 +449,8 @@ void deleteBlockFiles(const char *directory) {
 //=================== MAIN ===================
 int main(){
     mergeFiles("/home/rebecamadrigal/Escritorio/Proyecto1-SistemasOperativos-C-digoHuffman/Libros TXT Proyecto", "MergedTXT");                 //Nota: Recuerde cambiar la ruta por una relativa
-    splitFile("MergedTXT");
     //FILE *inputFile = fopen("MergedTXT", "r");
-    char letters[93/*256*/] = {                                                                                         //Nota, arreglos dentro de funciones deben indicar el tamaño al declararse, sino saldrá un error "Incomplete Types".
+    char letters[94/*256*/] = {                                                                                         //Nota, arreglos dentro de funciones deben indicar el tamaño al declararse, sino saldrá un error "Incomplete Types".
         'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 
         'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 
         'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 
@@ -498,55 +458,22 @@ int main(){
         '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
         /*'á',   'é',     'í',    'ó',   'ú',    'ü',    'ñ',    'Á',     'É',   'Í',    'Ó',    'Ú',    'Ü',     'Ñ', */       //Hay problemas reconociendo caractéres especiales
         //'\0x3B', '\xE9', '\xED', '\xF3', '\xFA', '\xFC', '\xF1', '\xC1', '\xC9', '\xCD', '\xD3', '\xDA', '\xDC', '\xD1',         //Valores hexadecimales de caractéres especiales 
-        ',', '.', /*';',*/ ':', '!', '?', /*'¡',*/ /*'¿',*/ '\'', '"', '(', ')', '-', '_', 
+        ',', '.', ';', ':', '!', '?', /*'¡',*/ /*'¿',*/ '\'', '"', '(', ')', '-', '_', 
         '[', ']', '{', '}', '<', '>', '+', '=', '*', '&', '^', '%', '$', '#', 
-        '@', '~', '/', '\\', '|'
+        '@', '~', '/', '\\', '|',/*'€'*/
     }; 
+    int lettersCount[94] = {0};
+    double freqArr[94] = {0};
 
-
-    // Cuenta los caracteres y calcula frecuencias para cada bloque
-    int blockNumber = splitFile("MergedTXT"); 
-    printf("Número total de bloques: %d\n", blockNumber);
-    int lettersCount[111] = {0};
-    double freqArr[111] = {0};
-    for (int i = 0; i < blockNumber; i++) {
-        char inputFile[256];
-        sprintf(inputFile, "block%d.txt", i);
-        FILE *input = fopen(inputFile, "r");
-        if (input == NULL) {
-            perror("Error al abrir el archivo de entrada");
-            exit(EXIT_FAILURE);
-        }
-        char blockData[BLOCK_SIZE];
-        size_t bytesRead;
-        while ((bytesRead = fread(blockData, sizeof(char), BLOCK_SIZE, input)) > 0) {
-            processBlock(blockData, bytesRead, letters, lettersCount);
-        }
-        fclose(input);
-    }
-    
-
-    // Construción del árbol Huffman y tambien genera los códigos Huffman
-    int size = sizeof(letters) / sizeof(letters[0]);
-    struct Node* root = buildHuffmanTree2(letters, lettersCount, size);
-    char *code[111];
+    countCharacters(letters, freqArr, lettersCount);
+    struct Node* root = buildHuffmanTree(letters, lettersCount, sizeof(letters) / sizeof(letters[0]));
+    int arr[MAX_TREE_HT], top = 0;
+    printCodes(root, arr, top);
+    char *code[256] = {NULL};
     char currentCode[MAX_TREE_HT];
     generateHuffmanCodes(root, code, currentCode, 0);
-
-    // Comprime todos los datos y los escribe en un archivo
-    FILE *inputFile = fopen("MergedTXT", "r");
-    FILE *outputFile = fopen("CompressedFile.txt", "w");
-    if (inputFile == NULL || outputFile == NULL) {
-        perror("Error al abrir el archivo de entrada o salida");
-        exit(EXIT_FAILURE);
-    }
-    writeCompressedData(inputFile, outputFile, code);
-    fclose(inputFile);
-    fclose(outputFile);
-
-    // Limpia todos los archivos block
-    deleteBlockFiles(".");
-
+    writeCompressedData("MergedTXT", code);
+    freeTree(tree);
     return 0;
 }
-    //fclose(inputFile);   
+     
