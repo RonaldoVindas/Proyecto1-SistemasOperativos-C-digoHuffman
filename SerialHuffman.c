@@ -383,6 +383,40 @@ void countCharacters(char *letters, double *freqArr, int *lettersCount) {
     }
 }                                                                                           
     
+
+char *extractUniqueCharacters(const char *filename, int *numUniqueChars) {
+    FILE *file = fopen(filename, "r");
+    if (file == NULL) {
+        perror("Error al abrir el archivo de entrada");
+        exit(EXIT_FAILURE);
+    }
+    int uniqueChars[256] = {0};
+    int numChars = 0;
+    int currentCharacter;
+    while ((currentCharacter = fgetc(file)) != EOF) {
+        uniqueChars[currentCharacter] = 1;
+    }
+    fclose(file);
+    for (int i = 0; i < 256; i++) {
+        if (uniqueChars[i]) {
+            numChars++;
+        }
+    }
+    char *uniqueCharArr = (char *)malloc(numChars * sizeof(char));
+    if (uniqueCharArr == NULL) {
+        perror("Error al asignar memoria para almacenar caracteres únicos");
+        exit(EXIT_FAILURE);
+    }
+    int index = 0;
+    for (int i = 0; i < 256; i++) {
+        if (uniqueChars[i]) {
+            uniqueCharArr[index++] = i;
+        }
+    }
+    *numUniqueChars = numChars; 
+    return uniqueCharArr;
+}
+
     
 
 //4)=================== Compresión ===================
@@ -448,32 +482,32 @@ void freeTree(struct HuffmanTree* tree) {
 
 //=================== MAIN ===================
 int main(){
-    mergeFiles("/home/rebecamadrigal/Escritorio/Proyecto1-SistemasOperativos-C-digoHuffman/Libros TXT Proyecto", "MergedTXT");                 //Nota: Recuerde cambiar la ruta por una relativa
+    //mergeFiles("/home/rebecamadrigal/Escritorio/Proyecto1-SistemasOperativos-C-digoHuffman/Libros TXT Proyecto", "MergedTXT");                 //Nota: Recuerde cambiar la ruta por una relativa
     //FILE *inputFile = fopen("MergedTXT", "r");
-    char letters[94/*256*/] = {                                                                                         //Nota, arreglos dentro de funciones deben indicar el tamaño al declararse, sino saldrá un error "Incomplete Types".
-        'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 
-        'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 
-        'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 
-        'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
-        '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-        /*'á',   'é',     'í',    'ó',   'ú',    'ü',    'ñ',    'Á',     'É',   'Í',    'Ó',    'Ú',    'Ü',     'Ñ', */       //Hay problemas reconociendo caractéres especiales
-        //'\0x3B', '\xE9', '\xED', '\xF3', '\xFA', '\xFC', '\xF1', '\xC1', '\xC9', '\xCD', '\xD3', '\xDA', '\xDC', '\xD1',         //Valores hexadecimales de caractéres especiales 
-        ',', '.', ';', ':', '!', '?', /*'¡',*/ /*'¿',*/ '\'', '"', '(', ')', '-', '_', 
-        '[', ']', '{', '}', '<', '>', '+', '=', '*', '&', '^', '%', '$', '#', 
-        '@', '~', '/', '\\', '|',/*'€'*/
-    }; 
+    //char letters[94/*256*/] = {                                                                                         //Nota, arreglos dentro de funciones deben indicar el tamaño al declararse, sino saldrá un error "Incomplete Types".
+    //    'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 
+    //    'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 
+    //    'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 
+    //    'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
+    //    '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+    //    '[', ']', '{', '}', '<', '>', '+', '=', '*', '&', '^', '%', '$', '#', 
+    //    '@', '~', '/', '\\', '|',/*'€'*/
+    //}; 
+    mergeFiles("/home/rebecamadrigal/Escritorio/Proyecto1-SistemasOperativos-C-digoHuffman/Libros TXT Proyecto", "MergedTXT");
+
+    int numUniqueChars; 
+    char *uniqueCharArr = extractUniqueCharacters("letters.txt", &numUniqueChars);
     int lettersCount[94] = {0};
     double freqArr[94] = {0};
-
-    countCharacters(letters, freqArr, lettersCount);
-    struct Node* root = buildHuffmanTree(letters, lettersCount, sizeof(letters) / sizeof(letters[0]));
+    countCharacters(uniqueCharArr, freqArr, lettersCount);
+    struct Node* root = buildHuffmanTree(uniqueCharArr, lettersCount, numUniqueChars);
     int arr[MAX_TREE_HT], top = 0;
     printCodes(root, arr, top);
     char *code[256] = {NULL};
     char currentCode[MAX_TREE_HT];
     generateHuffmanCodes(root, code, currentCode, 0);
     writeCompressedData("MergedTXT", code);
+    free(uniqueCharArr);
     freeTree(tree);
     return 0;
 }
-     
