@@ -417,7 +417,37 @@ char *extractUniqueCharacters(const char *filename, int *numUniqueChars) {
     return uniqueCharArr;
 }
 
-    
+void replaceNonUTF8Characters(char *str) {
+    while (*str) {
+        unsigned char current = (unsigned char)(*str);
+        if (current >= 0x80) { 
+            if (current == 0xE1) { 
+                *str = 'a';
+            } else if (current == 0xC1) { 
+                *str = 'A';
+            } else if (current == 0xE9) { 
+                *str = 'e';
+            } else if (current == 0xC9) { 
+                *str = 'E';
+            } else if (current == 0xED) { 
+                *str = 'i';
+            } else if (current == 0xCD) { 
+                *str = 'I';
+            } else if (current == 0xF3) { 
+                *str = 'o';
+            } else if (current == 0xD3) { 
+                *str = 'O';
+            } else if (current == 0xFA) { 
+                *str = 'u';
+            } else if (current == 0xDA) { 
+                *str = 'U';
+            } else { //Si es un caracter lo remplaza por "-"
+                *str = '-';
+            }
+        }
+        str++;
+    }
+}
 
 //4)=================== Compresión ===================
 
@@ -433,7 +463,7 @@ void generateHuffmanCodes(struct Node* root, char *code[], char *currentCode, in
     }
     if (isLeaf(root)) {
         currentCode[index] = '\0';
-        code[root->character] = strdup(currentCode); // Utilizamos strdup para copiar el código en una nueva cadena
+        code[root->character] = strdup(currentCode); 
     }
 }
 
@@ -493,7 +523,28 @@ int main(){
     //    '[', ']', '{', '}', '<', '>', '+', '=', '*', '&', '^', '%', '$', '#', 
     //    '@', '~', '/', '\\', '|',/*'€'*/
     //}; 
-    mergeFiles("/home/rebecamadrigal/Escritorio/Proyecto1-SistemasOperativos-C-digoHuffman/Libros TXT Proyecto", "MergedTXT");
+    //mergeFiles("/home/rebecamadrigal/Escritorio/Proyecto1-SistemasOperativos-C-digoHuffman/Libros TXT Proyecto", "MergedTXT");
+    /*FILE *fileIn = fopen("MergedTXT.txt", "r");
+    if (fileIn == NULL) {
+        perror("Error al abrir el archivo de entrada");
+        exit(EXIT_FAILURE);
+    }
+    FILE *fileOut = fopen("MergeMod.txt", "w");
+    if (fileOut == NULL) {
+        perror("Error al abrir el archivo de salida");
+        fclose(fileIn);
+        exit(EXIT_FAILURE);
+    }
+    while ((bytesRead = fread(buffer, 1, sizeof(buffer), fileIn)) > 0) {
+        replaceNonUTF8Characters(buffer);
+        fwrite(buffer, 1, bytesRead, fileOut);
+    }
+    fclose(fileIn);
+    fclose(fileOut);
+    printf("Se han reemplazado los caracteres no UTF-8 en el archivo y se ha creado MergeMod.txt.\n");
+*/
+
+
 
     int numUniqueChars; 
     char *uniqueCharArr = extractUniqueCharacters("letters.txt", &numUniqueChars);
@@ -509,5 +560,8 @@ int main(){
     writeCompressedData("MergedTXT", code);
     free(uniqueCharArr);
     freeTree(tree);
+
+
+
     return 0;
 }
