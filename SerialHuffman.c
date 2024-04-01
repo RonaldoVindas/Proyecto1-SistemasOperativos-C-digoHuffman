@@ -20,17 +20,10 @@ Ronaldo Vindas
 #define MAX_TREE_HT 256
 #define MAX_FILENAME_LENGTH 256
 #define MAX_CONTENT_LENGTH 10000            //Tamaño máximo del contenido de cada archivo
-#define NUM_THREADS 4                       //Número de hilos a utilizar
+#define NUM_THREADS 4                       // Número de hilos a utilizar
 #define BLOCK_SIZE 1024 
-#define CHUNK_SIZE 1000                     //Tamaño del bloque de datos a escribir en cada iteración
 
 // ================================================================================================================
-
-struct CharCode{
-    char character;                                         //Caracter ASCII a guardar
-    int* codeArray;                                         //Arreglo de númerios binarios correspondientes al código huffman
-    int codeLength;                                         //Tamañao del Código
-};
 
 //1) =================== Creación del Struct de Árbol Huffman ===================
 
@@ -372,7 +365,7 @@ void countCharacters(char *letters, double *freqArr, int *lettersCount) {
     }
 
     while ((currentCharacter = fgetc(inputFile)) != EOF) {
-        for (int i = 0; i < 165; i++) {
+        for (int i = 0; i < 93; i++) {
             if (currentCharacter == letters[i]) {
                 lettersCount[i]++;
             }
@@ -424,32 +417,39 @@ char *extractUniqueCharacters(const char *filename, int *numUniqueChars) {
     return uniqueCharArr;
 }
 
-    
-
-//4)=================== Compresión ===================
-
-void storeCodes(struct Node* root, struct CharCode* codesArray, int codeArray[], int top, int* index) {
-    if (root->left) {
-        codeArray[top] = 0;
-        storeCodes(root->left, codesArray, codeArray, top + 1, index);
-    }
-
-    if (root->right) {
-        codeArray[top] = 1;
-        storeCodes(root->right, codesArray, codeArray, top + 1, index);
-    }
-
-    if (root->left == NULL && root->right == NULL) {
-        codesArray[*index].character = root->character;
-        codesArray[*index].codeArray = malloc((top + 1) * sizeof(int));
-        codesArray[*index].codeLength = top + 1;
-        for (int i = 0; i < top + 1; i++) {
-            codesArray[*index].codeArray[i] = codeArray[i];
+void replaceNonUTF8Characters(char *str) {
+    while (*str) {
+        unsigned char current = (unsigned char)(*str);
+        if (current >= 0x80) { 
+            if (current == 0xE1) { 
+                *str = 'a';
+            } else if (current == 0xC1) { 
+                *str = 'A';
+            } else if (current == 0xE9) { 
+                *str = 'e';
+            } else if (current == 0xC9) { 
+                *str = 'E';
+            } else if (current == 0xED) { 
+                *str = 'i';
+            } else if (current == 0xCD) { 
+                *str = 'I';
+            } else if (current == 0xF3) { 
+                *str = 'o';
+            } else if (current == 0xD3) { 
+                *str = 'O';
+            } else if (current == 0xFA) { 
+                *str = 'u';
+            } else if (current == 0xDA) { 
+                *str = 'U';
+            } else { //Si es un caracter lo remplaza por "-"
+                *str = '-';
+            }
         }
-        (*index)++;
+        str++;
     }
 }
 
+//4)=================== Compresión ===================
 
 
 void generateHuffmanCodes(struct Node* root, char *code[], char *currentCode, int index) {
@@ -463,10 +463,9 @@ void generateHuffmanCodes(struct Node* root, char *code[], char *currentCode, in
     }
     if (isLeaf(root)) {
         currentCode[index] = '\0';
-        code[root->character] = strdup(currentCode); // Utilizamos strdup para copiar el código en una nueva cadena
+        code[root->character] = strdup(currentCode); 
     }
 }
-
 
 void writeCompressedData(const char *inputFileName, char **code) {
     FILE *input = fopen(inputFileName, "r");
@@ -510,32 +509,6 @@ void freeTree(struct HuffmanTree* tree) {
 }
 
 
-void storeCodesToFile(struct CharCode* codesArray, int size, const char* filename) {
-    FILE* file = fopen(filename, "wb");
-    if (file == NULL) {
-        printf("Error al abrir el archivo para escritura.\n");
-        return;
-    }
-
-    
-    fwrite(&size, sizeof(int), 1, file);                            //Escribe el número total de elementos que hay en codesArray
-
-    
-    int blockSize = CHUNK_SIZE;                                     //Escribir los datos en bloques de tamaño dinámico
-     for (int i = 0; i < size; ++i) {
-        fwrite(&codesArray[i].character, sizeof(char), 1, file);  // Escribir el caracter
-        fwrite(&codesArray[i].codeLength, sizeof(int), 1, file);  // Escribir la longitud del código
-
-        
-        int bytesNeeded = (codesArray[i].codeLength + 7) / 8;                           // Calcular la cantidad de bytes necesarios
-        fwrite(codesArray[i].codeArray, sizeof(char), bytesNeeded, file);               //Escribir el código Huffman como un array de bytes (comprimido)
-    }
-
-
-    fclose(file);
-}
-
-
 
 //=================== MAIN ===================
 int main(){
@@ -550,70 +523,30 @@ int main(){
     //    '[', ']', '{', '}', '<', '>', '+', '=', '*', '&', '^', '%', '$', '#', 
     //    '@', '~', '/', '\\', '|',/*'€'*/
     //}; 
-
-    //mergeFiles("Libros TXT Proyecto", "MergedTXT");
-
-    int numUniqueChars;
-    int lettersCount[165] = {0};
-    double freqArr[165] = {0};
-    char *uniqueCharArr = extractUniqueCharacters("letters.txt", &numUniqueChars);
-    countCharacters(uniqueCharArr, freqArr, lettersCount);
-
-    struct Node* root = buildHuffmanTree(uniqueCharArr, lettersCount, numUniqueChars);
-    int arr[MAX_TREE_HT], top = 0;
-    printCodes(root, arr, top);
-
-
-
-    //******************************************
-
-    const int MAX_SIZE = 75000000;                                          //Suponiendo un tamaño máximo de 72 millones de caracteres
-    struct CharCode* codesArray = malloc(MAX_SIZE * sizeof(struct CharCode));
-
-    
-    int codeArray[256];                                                     //Arreglo temporal para almacenar los códigos Huffman
-    int index = 0;
-    int size = 0;                                                           //Número actual de elementos en codesArray
-
-    
-    storeCodes(root, codesArray, codeArray, 0, &index);                     //Almacena los códigos del árbol en una estructura
-
-    // Se iteran sobre los codesArray para acceder a los códigos Huffman de cada carácter
-    for (int i = 0; i < index; i++) {
-        printf("Carácter: %c, Código Huffman: ", codesArray[i].character);
-        for (int j = 0; j < codesArray[i].codeLength; j++) {
-            printf("%d", codesArray[i].codeArray[j]);
-        }
-        printf("\n");
+    //mergeFiles("/home/rebecamadrigal/Escritorio/Proyecto1-SistemasOperativos-C-digoHuffman/Libros TXT Proyecto", "MergedTXT");
+    /*FILE *fileIn = fopen("MergedTXT.txt", "r");
+    if (fileIn == NULL) {
+        perror("Error al abrir el archivo de entrada");
+        exit(EXIT_FAILURE);
     }
+    FILE *fileOut = fopen("MergeMod.txt", "w");
+    if (fileOut == NULL) {
+        perror("Error al abrir el archivo de salida");
+        fclose(fileIn);
+        exit(EXIT_FAILURE);
+    }
+    while ((bytesRead = fread(buffer, 1, sizeof(buffer), fileIn)) > 0) {
+        replaceNonUTF8Characters(buffer);
+        fwrite(buffer, 1, bytesRead, fileOut);
+    }
+    fclose(fileIn);
+    fclose(fileOut);
+    printf("Se han reemplazado los caracteres no UTF-8 en el archivo y se ha creado MergeMod.txt.\n");
+*/
 
-    // Llamada a la función para almacenar los códigos en un archivo binario
-    storeCodesToFile(codesArray, MAX_SIZE, "codigos_huffman.bin");
-
-    free(codesArray);  // Liberar memoria dinámica
 
 
-
-
-
-
-
-
-
-
-
-
-    /*
-    char *code[256] = {NULL};
-    char currentCode[MAX_TREE_HT];
-    generateHuffmanCodes(root, code, currentCode, 0);
-    writeCompressedData("MergedTXT", code);
-    free(uniqueCharArr);
-    freeTree(tree);
-    */
-    
-    
-    /*int numUniqueChars; 
+    int numUniqueChars; 
     char *uniqueCharArr = extractUniqueCharacters("letters.txt", &numUniqueChars);
     int lettersCount[94] = {0};
     double freqArr[94] = {0};
@@ -626,6 +559,9 @@ int main(){
     generateHuffmanCodes(root, code, currentCode, 0);
     writeCompressedData("MergedTXT", code);
     free(uniqueCharArr);
-    freeTree(tree);*/
+    freeTree(tree);
+
+
+
     return 0;
 }
