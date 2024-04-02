@@ -524,7 +524,7 @@ int main(){
     //    '@', '~', '/', '\\', '|',/*'€'*/
     //}; 
     //mergeFiles("/home/rebecamadrigal/Escritorio/Proyecto1-SistemasOperativos-C-digoHuffman/Libros TXT Proyecto", "MergedTXT");
-    /*FILE *fileIn = fopen("MergedTXT.txt", "r");
+    FILE *fileIn = fopen("MergedTXT", "r");
     if (fileIn == NULL) {
         perror("Error al abrir el archivo de entrada");
         exit(EXIT_FAILURE);
@@ -535,6 +535,8 @@ int main(){
         fclose(fileIn);
         exit(EXIT_FAILURE);
     }
+    size_t bytesRead; 
+    unsigned char buffer[4096];
     while ((bytesRead = fread(buffer, 1, sizeof(buffer), fileIn)) > 0) {
         replaceNonUTF8Characters(buffer);
         fwrite(buffer, 1, bytesRead, fileOut);
@@ -542,10 +544,8 @@ int main(){
     fclose(fileIn);
     fclose(fileOut);
     printf("Se han reemplazado los caracteres no UTF-8 en el archivo y se ha creado MergeMod.txt.\n");
-*/
 
-
-
+/*
     int numUniqueChars; 
     char *uniqueCharArr = extractUniqueCharacters("letters.txt", &numUniqueChars);
     int lettersCount[94] = {0};
@@ -561,7 +561,7 @@ int main(){
     free(uniqueCharArr);
     freeTree(tree);
 
-
+*/
 
     return 0;
 }
