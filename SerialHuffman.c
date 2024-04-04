@@ -27,6 +27,11 @@ Ronaldo Vindas
 
 //1) =================== Creación del Struct de Árbol Huffman ===================
 
+<<<<<<< HEAD
+
+
+=======
+>>>>>>> a0373ee459a7d099a059e6f0376bf96f1fd2d5ad
 struct HuffmanTree* tree;
 
 struct Node{                                                                    //Nodo del Aŕbol Heap                                                           
@@ -42,7 +47,14 @@ struct HuffmanTree{                                                             
     struct Node** array;                                                       //Arreglo de NOdos
 }; 
 
+<<<<<<< HEAD
+struct HuffmanCode {
+    char character;
+    char code[MAX_TREE_HT]; // Código Huffman
+};
+=======
 
+>>>>>>> a0373ee459a7d099a059e6f0376bf96f1fd2d5ad
 
 //=================== Métodos de Árbol Huffman ===================
 
@@ -296,7 +308,31 @@ void HuffmanCodes(char *data, int *freq, int size){
 } 
 
 
+<<<<<<< HEAD
+void saveCodes(struct Node* root, struct HuffmanCode codes[], int codeArray[], int top) {
+    if (root->left) {
+        codeArray[top] = 0;
+        saveCodes(root->left, codes, codeArray, top + 1);
+    }
 
+    if (root->right) {
+        codeArray[top] = 1;
+        saveCodes(root->right, codes, codeArray, top + 1);
+    }
+
+    if (isLeaf(root)) {
+        struct HuffmanCode code;
+        code.character = root->character;
+        memset(code.code, '\0', sizeof(code.code));
+        for (int i = 0; i < top; i++) {
+            code.code[i] = codeArray[i] + '0'; // Convertir 0 y 1 a caracteres '0' y '1'
+        }
+        codes[code.character] = code; // Almacenar el código Huffman en la estructura
+    }
+}
+=======
+
+>>>>>>> a0373ee459a7d099a059e6f0376bf96f1fd2d5ad
 
 //2)=================== Lectura de Carpeta de Archivos ===================
 
@@ -365,7 +401,11 @@ void countCharacters(char *letters, double *freqArr, int *lettersCount) {
     }
 
     while ((currentCharacter = fgetc(inputFile)) != EOF) {
+<<<<<<< HEAD
+        for (int i = 0; i < 94; i++) {
+=======
         for (int i = 0; i < 93; i++) {
+>>>>>>> a0373ee459a7d099a059e6f0376bf96f1fd2d5ad
             if (currentCharacter == letters[i]) {
                 lettersCount[i]++;
             }
@@ -377,7 +417,11 @@ void countCharacters(char *letters, double *freqArr, int *lettersCount) {
 
     printf("El archivo MergedTXT tiene %d caracteres\n ", characterCount);
 
+<<<<<<< HEAD
+    for (int i = 0; i < 94; i++) {
+=======
     for (int i = 0; i < 93; i++) {
+>>>>>>> a0373ee459a7d099a059e6f0376bf96f1fd2d5ad
         freqArr[i] = (double)lettersCount[i] / characterCount * 100;
         printf("Caracter '%c' aparece %d veces, frecuencia: %.2f%%, precision: %f \n", letters[i], lettersCount[i], freqArr[i], freqArr[i]);
     }
@@ -385,19 +429,36 @@ void countCharacters(char *letters, double *freqArr, int *lettersCount) {
     
 
 char *extractUniqueCharacters(const char *filename, int *numUniqueChars) {
+<<<<<<< HEAD
+    /*
+    Función que extrae qué caractéres tiene un texto.
+    -Entradas: filename: archivo a analizar, numUniqueChars: variable que almacena la cantidad de caractéres únicos que se encuentran en el texto
+    -Salidas: Arreglo con caracteres
+    -Restricciones: N/A
+    */
+=======
+>>>>>>> a0373ee459a7d099a059e6f0376bf96f1fd2d5ad
     FILE *file = fopen(filename, "r");
     if (file == NULL) {
         perror("Error al abrir el archivo de entrada");
         exit(EXIT_FAILURE);
     }
+<<<<<<< HEAD
+    int uniqueChars[94] = {0};
+=======
     int uniqueChars[256] = {0};
+>>>>>>> a0373ee459a7d099a059e6f0376bf96f1fd2d5ad
     int numChars = 0;
     int currentCharacter;
     while ((currentCharacter = fgetc(file)) != EOF) {
         uniqueChars[currentCharacter] = 1;
     }
     fclose(file);
+<<<<<<< HEAD
+    for (int i = 0; i < 94; i++) {
+=======
     for (int i = 0; i < 256; i++) {
+>>>>>>> a0373ee459a7d099a059e6f0376bf96f1fd2d5ad
         if (uniqueChars[i]) {
             numChars++;
         }
@@ -408,7 +469,11 @@ char *extractUniqueCharacters(const char *filename, int *numUniqueChars) {
         exit(EXIT_FAILURE);
     }
     int index = 0;
+<<<<<<< HEAD
+    for (int i = 0; i < 94; i++) {
+=======
     for (int i = 0; i < 256; i++) {
+>>>>>>> a0373ee459a7d099a059e6f0376bf96f1fd2d5ad
         if (uniqueChars[i]) {
             uniqueCharArr[index++] = i;
         }
@@ -418,6 +483,15 @@ char *extractUniqueCharacters(const char *filename, int *numUniqueChars) {
 }
 
 void replaceNonUTF8Characters(char *str) {
+<<<<<<< HEAD
+    /*
+    Reemplaza caractéres no compatibles con cidificación UTF-8.
+    -Entradas: str: String a analizar
+    -Salidas: N/A
+    -Restricciones: N/A
+    */
+=======
+>>>>>>> a0373ee459a7d099a059e6f0376bf96f1fd2d5ad
     while (*str) {
         unsigned char current = (unsigned char)(*str);
         if (current >= 0x80) { 
@@ -452,6 +526,8 @@ void replaceNonUTF8Characters(char *str) {
 //4)=================== Compresión ===================
 
 
+<<<<<<< HEAD
+=======
 void generateHuffmanCodes(struct Node* root, char *code[], char *currentCode, int index) {
     if (root->left) {
         currentCode[index] = '0';
@@ -507,11 +583,34 @@ void freeTree(struct HuffmanTree* tree) {
     free(tree->array);
     free(tree);
 }
+>>>>>>> a0373ee459a7d099a059e6f0376bf96f1fd2d5ad
 
 
 
 //=================== MAIN ===================
 int main(){
+<<<<<<< HEAD
+    
+    mergeFiles("Libros TXT Proyecto", "MergedTXT");
+
+    //int numUniqueChars; 
+    //char *uniqueCharArr = extractUniqueCharacters("letters.txt", &numUniqueChars);
+    //int lettersCount[94] = {0};
+    //double freqArr[94] = {0};
+
+    //countCharacters(uniqueCharArr, freqArr, lettersCount);
+
+    //struct Node* root = buildHuffmanTree(uniqueCharArr, lettersCount, numUniqueChars);
+    //int arr[MAX_TREE_HT], top = 0;
+    
+    
+    //printCodes(root, arr, top);
+
+    //struct HuffmanCode codes[94];
+
+    //saveCodes(root,codes, arr, top);
+    //compressText("MergedTXT", "compressed.bin", codes);
+=======
     //mergeFiles("/home/rebecamadrigal/Escritorio/Proyecto1-SistemasOperativos-C-digoHuffman/Libros TXT Proyecto", "MergedTXT");                 //Nota: Recuerde cambiar la ruta por una relativa
     //FILE *inputFile = fopen("MergedTXT", "r");
     //char letters[94/*256*/] = {                                                                                         //Nota, arreglos dentro de funciones deben indicar el tamaño al declararse, sino saldrá un error "Incomplete Types".
@@ -561,6 +660,7 @@ int main(){
     free(uniqueCharArr);
     freeTree(tree);
 
+>>>>>>> a0373ee459a7d099a059e6f0376bf96f1fd2d5ad
 
 
     return 0;
