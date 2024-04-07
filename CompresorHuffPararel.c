@@ -261,6 +261,24 @@ HuffmanNode* buildHuffmanTree(char data[], int frequency[], int size) {
     return root;
 }
 
+// Imprimir el código Huffman desde el árbol
+void printCodes(HuffmanNode* root, int arr[], int top) {
+    if (root->left) {
+        arr[top] = 0;
+        printCodes(root->left, arr, top + 1);
+    }
+    if (root->right) {
+        arr[top] = 1;
+        printCodes(root->right, arr, top + 1);
+    }
+    if (isLeaf(root)) {
+        printf("%c: ", root->data);
+        for (int i = 0; i < top; ++i)
+            printf("%d", arr[i]);
+        printf("\n");
+    }
+}
+
 int main() {
     clock_t start_time, end_time;
     double cpu_time_used;
