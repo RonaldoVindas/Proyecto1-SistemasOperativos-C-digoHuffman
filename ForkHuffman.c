@@ -10,10 +10,12 @@ Ronaldo Vindas
 
 */
 
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <dirent.h>                         //Librería POSIX
+#include <sys/types.h>
+#include <unistd.h>
 #include <time.h>
 
 // Estructura para nodos del árbol de Huffman
@@ -200,42 +202,71 @@ void compressFile(FILE *inputFile, FILE *outputFile) {
     fclose(outputFile);
 }
 
-int main() {
+// Función principal para el proceso de compresión concurrente
+void compressForks() {
+    /*Función que incluye el proceso que se va a paralelizar, divide qué proceso hace cada fork, cada fork 
+    se encarga de trabajar uno de los libros de la carpeta
+    -Entradas: N/A
+    -Salidas: N/A
+    -Restricciones: N/A
+    */
+
     int contador = 1;
     char primeraParte[] = "LibrosTXT/";
     char segundaParte[] = ".txt";
     char completo[500];
 
+       
 
-    FILE *inputFile, *outputFile;
-    
+    while (contador < 99) { 
+        sprintf(completo, "%s%d%s", primeraParte, contador, segundaParte);
+        FILE *inputFile = fopen(completo, "r");
+        FILE *outputFile = fopen("outputFork.bin", "wb");
+
+        if (inputFile == NULL || outputFile == NULL) {
+            printf("Error al abrir el archivo.\n");
+            exit(1);
+        }
+
+        pid_t pid = fork();                                         //Para cada libro se crea un nuevo proceso, fork 
+                                                                    //retorna 0 al proceso hijo, y al padre le regresa el PID de su hijo,
+                                                                    // sino retorna -1 y no crea el proceso hijo
+        
+        if (pid == -1) {
+            fprintf(stderr, "Error al crear el proceso hijo.\n");
+            exit(1);
+        } else if (pid == 0) {                                      //Al proceso hijo se le asigna qué debe de hacer
+            compressFile(inputFile, outputFile);
+            exit(0);                                                //Sale del proceso hijo después de hacer su asignación
+        } else {                                                    //El proceso padre debe esperar a que todos los procesos hijos terminen
+            wait(NULL); 
+            contador++;
+        }
+        
+        
+        fclose(inputFile);
+        fclose(outputFile);
+    }
+}
+
+int main() {
+     int contador = 1;
+    char primeraParte[] = "LibrosTXT/";
+    char segundaParte[] = ".txt";
+    char completo[500];
+
     clock_t start_time, end_time;
     double cpu_time_used;
 
-    start_time = clock(); // Inicio del programa    
+    start_time = clock();                                                       //Inicio de cronómetro  
 
-    while(contador != 99){
-        sprintf(completo, "%s%d%s", primeraParte, contador, segundaParte);
-        inputFile = fopen(completo, "r"); // Cambiar "input.txt" por el nombre del archivo de entrada
-        outputFile = fopen("output.bin", "wb"); // Archivo binario de salida
+    compressForks();
 
-        if (inputFile == NULL || outputFile == NULL) {
-        printf("Error al abrir el archivo.\n");
-        exit(1);
-        }
-
-        compressFile(inputFile, outputFile);
-
-        contador++;
-    }
-
-    end_time = clock(); // Fin del programa
+    end_time = clock();                                                         //Final del programa
 
     cpu_time_used = ((double) (end_time - start_time)) / CLOCKS_PER_SEC;
     printf("Tiempo de ejecución: %f segundos\n", cpu_time_used);
 
-
     printf("Compresión completada.\n");
-
     return 0;
 }
