@@ -4,6 +4,10 @@
 #include <pthread.h>
 #include <time.h>
 
+
+#define NUM_THREADS 4
+#define NUM_FILES 100
+
 // Estructura para nodos del árbol de Huffman
 typedef struct HuffmanNode {
     char data;
@@ -23,6 +27,9 @@ typedef struct {
     char file_name[256];
     int thread_id;
 } ThreadData;
+
+// Declaración de la función buildHuffmanTree
+HuffmanNode* buildHuffmanTree(char data[], int frequency[], int size);
 
 // Crear un nodo para el árbol de Huffman
 HuffmanNode* createHuffmanNode(char data, unsigned frequency) {
@@ -124,99 +131,23 @@ void freeHuffmanTree(HuffmanNode* root) {
     free(root);
 }
 
-// Función para liberar una cola de prioridad (MinHeap)
-void freeMinHeap(MinHeap* minHeap) {
-    if (minHeap == NULL) {
-        return;
+
+void* compressFiles(void* arg) {
+    ThreadData* data = (ThreadData*)arg;
+
+    int start_index = (data->thread_id - 1) * (NUM_FILES / NUM_THREADS);
+    int end_index = data->thread_id * (NUM_FILES / NUM_THREADS);
+
+    printf("Thread %d processing files from index %d to %d\n", data->thread_id, start_index, end_index - 1);
+
+    // Simulated file processing
+    for (int i = start_index; i < end_index; ++i) {
+        printf("Thread %d processing file %d\n", data->thread_id, i + 1);
+        // Add your file processing logic here
     }
-    free(minHeap->array);
-    free(minHeap);
+
+    pthread_exit(NULL);
 }
-
-// Construir el árbol de Huffman
-HuffmanNode* buildHuffmanTree(char data[], int frequency[], int size) {
-    HuffmanNode *left, *right, *top;
-    MinHeap* minHeap = createMinHeap(size);
-    for (int i = 0; i < size; ++i) {
-        minHeap->array[i] = createHuffmanNode(data[i], frequency[i]);
-        minHeap->size++;
-    }
-    buildMinHeap(minHeap);
-    while (!isSizeOne(minHeap)) {
-        left = extractMin(minHeap);
-        right = extractMin(minHeap);
-        top = createHuffmanNode('$', left->frequency + right->frequency);
-        top->left = left;
-        top->right = right;
-        insertMinHeap(minHeap, top);
-    }
-    HuffmanNode* root = extractMin(minHeap);
-    freeMinHeap(minHeap); // Liberar la memoria utilizada por la cola de prioridad
-    return root;
-}
-
-// Imprimir el código Huffman desde el árbol
-void printCodes(HuffmanNode* root, int arr[], int top) {
-    if (root->left) {
-        arr[top] = 0;
-        printCodes(root->left, arr, top + 1);
-    }
-    if (root->right) {
-        arr[top] = 1;
-        printCodes(root->right, arr, top + 1);
-    }
-    if (isLeaf(root)) {
-        printf("%c: ", root->data);
-        for (int i = 0; i < top; ++i)
-            printf("%d", arr[i]);
-        printf("\n");
-    }
-}
-
-// Función principal para comprimir el archivo de texto y generar el archivo .bin
-void compressFile(const char* inputFileName) {
-    int frequency[256] = {0}; // Inicializar la frecuencia de cada caracter a 0
-    char character;
-
-    FILE* inputFile = fopen(inputFileName, "r");
-    if (inputFile == NULL) {
-        fprintf(stderr, "Error al abrir el archivo: %s\n", inputFileName);
-        exit(EXIT_FAILURE);
-    }
-
-    // Calcular la frecuencia de cada caracter en el archivo de texto
-    while ((character = fgetc(inputFile)) != EOF) {
-        frequency[(unsigned char)character]++;
-    }
-
-    // Crear arreglos para almacenar los caracteres y sus frecuencias
-    char data[256];
-    int freq[256];
-    int index = 0;
-
-    // Llenar los arreglos con los caracteres y sus frecuencias
-    for (int i = 0; i < 256; i++) {
-        if (frequency[i] > 0) {
-            data[index] = (char)i;
-            freq[index] = frequency[i];
-            index++;
-        }
-    }
-
-    fclose(inputFile);
-
-    // Construir el árbol de Huffman
-    HuffmanNode* root = buildHuffmanTree(data, freq, index);
-
-    // Imprimir los códigos Huffman
-    int arr[256], top = 0;
-    printf("Códigos Huffman:\n");
-    printCodes(root, arr, top);
-
-    // Liberar memoria del árbol Huffman
-    freeHuffmanTree(root);
-}
-
 
 // Función de compresión de archivo para cada hilo
 void* compressFileThread(void* arg) {
@@ -224,11 +155,110 @@ void* compressFileThread(void* arg) {
     char inputFileName[256];
     sprintf(inputFileName, "LibrosTXT/%s.txt", data->file_name);
 
-    compressFile(inputFileName);
+    int frequency[256] = {0}; // Inicializar la frecuencia de cada caracter a 0
+    char character;
+
+    FILE* inputFile = fopen(inputFileName, "r");
+    if (inputFile == NULL) {
+        fprintf(stderr, "Error al abrir el archivo: %s\n", inputFileName);
+        pthread_exit(NULL);
+    }
+
+    // Calcular la frecuencia de cada caracter en el archivo de texto
+    while ((character = fgetc(inputFile)) != EOF) {
+        frequency[(unsigned char)character]++;
+    }
+
+    fclose(inputFile);
+
+    // Crear arreglos para almacenar los caracteres y sus frecuencias
+    char charData[256];
+    int freq[256];
+    int index = 0;
+
+    // Llenar los arreglos con los caracteres y sus frecuencias
+    for (int i = 0; i < 256; i++) {
+        if (frequency[i] > 0) {
+            charData[index] = (char)i;
+            freq[index] = frequency[i];
+            index++;
+        }
+    }
+
+    // Construir el árbol de Huffman
+    HuffmanNode* root = buildHuffmanTree(charData, freq, index);
+
+    // Escribir la salida comprimida en el archivo output.bin
+    FILE* outputFile = fopen("output.bin", "ab");
+    if (outputFile == NULL) {
+        fprintf(stderr, "Error al abrir el archivo output.bin\n");
+        pthread_exit(NULL);
+    }
+
+    // Escribir los datos comprimidos en el archivo .bin
+    inputFile = fopen(inputFileName, "r");
+    if (inputFile == NULL) {
+        fprintf(stderr, "Error al abrir el archivo: %s\n", inputFileName);
+        fclose(outputFile);
+        pthread_exit(NULL);
+    }
+
+    int codeBuffer = 0;
+    int bitCount = 0;
+    while ((character = fgetc(inputFile)) != EOF) {
+        for (int i = 0; i < index; i++) {
+            if (charData[i] == character) {
+                // Escribir el índice (código) comprimido en el archivo
+                codeBuffer = (codeBuffer << 1) | freq[i];
+                bitCount++;
+                if (bitCount == 8) {
+                    fputc(codeBuffer, outputFile);
+                    codeBuffer = 0;
+                    bitCount = 0;
+                }
+                break;
+            }
+        }
+    }
+
+    fclose(inputFile);
+    fclose(outputFile);
+
+    // Liberar memoria del árbol Huffman
+    freeHuffmanTree(root);
 
     printf("Compresión completada para el archivo %s en hilo %d.\n", data->file_name, data->thread_id);
 
     pthread_exit(NULL);
+}
+
+// Implementación de la función buildHuffmanTree
+HuffmanNode* buildHuffmanTree(char data[], int frequency[], int size) {
+    MinHeap* minHeap = createMinHeap(size);
+
+    for (int i = 0; i < size; ++i) {
+        minHeap->array[i] = createHuffmanNode(data[i], frequency[i]);
+    }
+
+    minHeap->size = size;
+    buildMinHeap(minHeap);
+
+    while (!isSizeOne(minHeap)) {
+        HuffmanNode* left = extractMin(minHeap);
+        HuffmanNode* right = extractMin(minHeap);
+
+        HuffmanNode* newNode = createHuffmanNode('$', left->frequency + right->frequency);
+        newNode->left = left;
+        newNode->right = right;
+
+        insertMinHeap(minHeap, newNode);
+    }
+
+    HuffmanNode* root = extractMin(minHeap);
+    free(minHeap->array);
+    free(minHeap);
+
+    return root;
 }
 
 int main() {
@@ -236,27 +266,25 @@ int main() {
     double cpu_time_used;
     start_time = clock();
 
-    const int num_threads = 10; // Número de hilos
-    pthread_t threads[num_threads];
-    ThreadData thread_data[num_threads];
+    pthread_t threads[NUM_THREADS];
+    ThreadData thread_data[NUM_THREADS];
 
     // Crear y ejecutar hilos para procesar diferentes archivos en paralelo
-    for (int i = 0; i < num_threads; ++i) {
+    for (int i = 0; i < NUM_THREADS; ++i) {
         thread_data[i].thread_id = i + 1;
-        sprintf(thread_data[i].file_name, "%d", i + 1);
-        pthread_create(&threads[i], NULL, compressFileThread, (void*)&thread_data[i]);
+        pthread_create(&threads[i], NULL, compressFiles, (void*)&thread_data[i]);
     }
 
     // Esperar a que todos los hilos terminen
-    for (int i = 0; i < num_threads; ++i) {
+    for (int i = 0; i < NUM_THREADS; ++i) {
         pthread_join(threads[i], NULL);
     }
 
     printf("Todos los archivos han sido comprimidos.\n");
 
-    
     end_time = clock();
     cpu_time_used = ((double)(end_time - start_time)) / CLOCKS_PER_SEC;
-    printf("Tiempo de ejecución %f segundos\n.", cpu_time_used);
+    printf("Tiempo de ejecución %f segundos.\n", cpu_time_used);
+
     return 0;
 }
