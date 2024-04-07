@@ -194,11 +194,8 @@ void compressFile(FILE *inputFile, FILE *outputFile) {
             }
         }
     }
-
-    // Liberar memoria
-    fclose(inputFile);
-    fclose(outputFile);
 }
+
 
 int main() {
     int contador = 1;
@@ -214,7 +211,7 @@ int main() {
 
     start_time = clock(); // Inicio del programa    
 
-    while(contador != 99){
+    while(contador != 2){
         sprintf(completo, "%s%d%s", primeraParte, contador, segundaParte);
         inputFile = fopen(completo, "r"); // Cambiar "input.txt" por el nombre del archivo de entrada
         outputFile = fopen("output.bin", "wb"); // Archivo binario de salida
