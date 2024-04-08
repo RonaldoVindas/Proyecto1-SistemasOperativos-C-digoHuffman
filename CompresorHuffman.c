@@ -211,10 +211,10 @@ int main() {
 
     start_time = clock(); // Inicio del programa    
 
-    while(contador != 2){
+    while(contador < 99){
         sprintf(completo, "%s%d%s", primeraParte, contador, segundaParte);
         inputFile = fopen(completo, "r"); // Cambiar "input.txt" por el nombre del archivo de entrada
-        outputFile = fopen("output.bin", "wb"); // Archivo binario de salida
+        outputFile = fopen("outputSerial.bin", "wb"); // Archivo binario de salida
 
         if (inputFile == NULL || outputFile == NULL) {
         printf("Error al abrir el archivo.\n");

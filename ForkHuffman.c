@@ -109,6 +109,7 @@ int isLeaf(HuffmanNode* root) {
     return !(root->left) && !(root->right);
 }
 
+
 // Crear e insertar en el árbol de Huffman
 MinHeap* createAndBuildMinHeap(char data[], int frequency[], int size) {
     MinHeap* minHeap = createMinHeap(size);
@@ -202,6 +203,27 @@ void compressFile(FILE *inputFile, FILE *outputFile) {
     fclose(outputFile);
 }
 
+void freeHuffmanTree(HuffmanNode *root) {
+    if (root != NULL) {
+        freeHuffmanTree(root->left);
+        freeHuffmanTree(root->right);
+        free(root);
+    }
+}
+
+void freeMinHeap(MinHeap *minHeap) {
+    if (minHeap != NULL) {
+        for (unsigned i = 0; i < minHeap->size; ++i) {
+            free(minHeap->array[i]);
+        }
+        free(minHeap->array);
+        free(minHeap);
+    }
+}
+
+
+
+
 // Función principal para el proceso de compresión concurrente
 void compressForks() {
     /*Función que incluye el proceso que se va a paralelizar, divide qué proceso hace cada fork, cada fork 
@@ -218,35 +240,33 @@ void compressForks() {
 
        
 
-    while (contador < 99) { 
-        sprintf(completo, "%s%d%s", primeraParte, contador, segundaParte);
-        FILE *inputFile = fopen(completo, "r");
-        FILE *outputFile = fopen("outputFork.bin", "wb");
+     while (contador < 99) {
+        pid_t pid = fork(); // Crear un nuevo proceso hijo
+        if (pid == 0) { // Proceso hijo
+            sprintf(completo, "%s%d%s", primeraParte, contador, segundaParte);
+            FILE *inputFile = fopen(completo, "r");
+            FILE *outputFile = fopen("outputFork.bin", "wb");
 
-        if (inputFile == NULL || outputFile == NULL) {
-            printf("Error al abrir el archivo.\n");
-            exit(1);
-        }
+            if (inputFile == NULL || outputFile == NULL) {
+                printf("Error al abrir el archivo.\n");
+                exit(1);
+            }
 
-        pid_t pid = fork();                                         //Para cada libro se crea un nuevo proceso, fork 
-                                                                    //retorna 0 al proceso hijo, y al padre le regresa el PID de su hijo,
-                                                                    // sino retorna -1 y no crea el proceso hijo
-        
-        if (pid == -1) {
-            fprintf(stderr, "Error al crear el proceso hijo.\n");
-            exit(1);
-        } else if (pid == 0) {                                      //Al proceso hijo se le asigna qué debe de hacer
             compressFile(inputFile, outputFile);
-            exit(0);                                                //Sale del proceso hijo después de hacer su asignación
-        } else {                                                    //El proceso padre debe esperar a que todos los procesos hijos terminen
-            wait(NULL); 
-            contador++;
+
+            fclose(inputFile);
+            fclose(outputFile);
+            exit(0); // Terminar el proceso hijo después de completar la compresión
+        } else if (pid < 0) { // Error al crear el proceso hijo
+            printf("Error al crear el proceso hijo.\n");
+            exit(1);
         }
-        
-        
-        fclose(inputFile);
-        fclose(outputFile);
+
+        contador++;
     }
+
+    // Esperar a que terminen todos los procesos hijos
+    while (wait(NULL) > 0);
 }
 
 int main() {
